@@ -1,3 +1,4 @@
+load_store
 mmap_munmap
 mprotect_exec
 self_modifying

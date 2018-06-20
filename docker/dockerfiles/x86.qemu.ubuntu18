@@ -1,0 +1,7 @@
+FROM ubuntu:18.04
+
+RUN apt update && \
+  apt install -y qemu-user && \
+  apt -y autoclean && apt -y clean && apt -y autoremove
+
+WORKDIR /src

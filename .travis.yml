@@ -1,0 +1,36 @@
+os: linux
+services: docker
+language: minimal
+install: skip
+addons:
+  apt:
+    packages:
+    - docker-ce
+
+env:
+  global:
+  - secure: F/BoAtt79ARXHFBujw2BGxA9COCYCq+rGNWe9azmISTfEulh+CL3aFaXNc98BZgzXvLFoUZrzWLsgSLBud4o0yavJmjW3WRwBDnMQIlvY/Y3+xwXUZCdiCRZmonf1fNXC6jlnwcOIqAwbYpJNGxIQ+CSrkCsmYGVG4NBTygsIDc6EWKMUmmdaEewIRr7J03c+r1rjLHFzZ3Fzu95OweoZ9VD41tA46E/dYnVrEF+CDyBTKDCsYgVvjyL4yHiBKjn3anlyFFSk07/XCV/0QN2J3I0qrhheiGrbiF/3is8YW+A+ZjcRnS6nI6iaXg7Pp8ruui+LSIpBQ/fhtOthD2W90hWjaXN7/xVJtLXPtmJIegv6gjoIcA/x0/j/ub3tYQw0O36MwcAmpGor+kG5NqxiLEvbo2xppBSMwLRHgx8NYLRSx0hF2tKeiXg/ybOTK7ChtHbxOLHyJzaYNaq72Zv4RJ+vtKM61sxHLi6KtdOy7CKogRCSiKX2kMQS8uhaMN54t9iLfQHjHhWoKlVe+Pc9LuRU3nzg4jlrGILAHJPnKC6pR0X1NSlzmsx6ylwleC8MaftZpigUR0mddg/qzOeQv8ZDbZ/s+ld89CIiIMXm+pSJJnTAXw6m7q6nSGlRNgc7jnISnW6+KwuPj+SqNEcfnpX61bK7QYsUaxpWL9GPDI=
+  - secure: u5hl9YQsOvABF7anafClGG8pKvQVrlgBFIgksMmn96/hh0o4RVwquxD+evGaWSP64j9Jvy1R/wyBAObfmB6Bf95YVnBFY+DsxsK9L65cEYQp4N/Xtrx8kP7yy46KGZQh4WqlnZJUPVAd2d8QOmgpFgkCBP+aa0xQAlVpFj+aa597VTVNA2BSd4rLN2gCFwqW57h4FgBGqQlDp4mPod3ulCzjEG7t3CgvxjrDyA+xXis8DqSP6UjtviBnI1RLQgXkhrc92Z6Ln++YAOp/yt2bw9tG254+gx7b4mGJ0wymmtNR9sLiNZwn1L+sU6aTjjfQMqeybr8OFm570B1Amjn+Y/hgRNp+xqutAx+lDX0x9a5o1ZHeFoq9bOCH1wBtJMu1o5lDGfnEpcYb67QrfcQMq1V9yVMO5l4QS02kmsFqJfQ0VoMekUIzOldQB4KhSwgA7xO55VwfF/duRu3lfWx+da0M0cDWcBViUd7kDjH6kz+w3hgdX6okZ5XMme6GYEDV2xN/pBQarF/mQCGBcf3humtYWlfd20hRQ/3owVzfGqJkNHxFbG0y3TGgF6nyPr3u+Z/5TbjFHkL5ncbBaKc8ohUMpCdYxE9XhMGAJdXILFJhj/ZbMEcmt8NygK/xtCRf9GkOfwExp2Vvi3OoQQZxejrsOnb+VDNeM7/zf18BjRU=
+
+stages:
+  - create
+  - test
+
+jobs:
+  include:
+    - stage: create
+      script:
+        - sudo ./travis/register.sh
+        - ./docker/create.sh
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script: "./docker/deploy2dockerhub.sh"
+        on:
+          repo: umarcor/mambo
+          branch: docker-umarcor
+    - stage: test
+      sudo: required
+      script:
+        - sudo ./travis/register.sh
+        - ./docker/test.sh

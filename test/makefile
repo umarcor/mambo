@@ -9,7 +9,7 @@ ifeq ($(ARCH),aarch64)
 	PIE_DECODER = ../pie/pie-a64-decoder.o
 endif
 
-CFLAGS+=-std=gnu99
+CFLAGS+=-static -std=gnu99
 LDFLAGS+=-lpthread
 
 .PHONY: clean

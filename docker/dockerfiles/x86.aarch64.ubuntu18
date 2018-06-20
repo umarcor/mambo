@@ -1,0 +1,34 @@
+FROM ubuntu:18.04 AS gcc-aarch64
+
+RUN apt update && \
+  apt install -y curl make binutils gcc-aarch64-linux-gnu
+
+ENV CC aarch64-linux-gnu-gcc
+
+WORKDIR /src
+
+#---
+
+FROM gcc-aarch64 AS tmp
+
+RUN apt install -y qemu-user build-essential
+
+RUN curl -L http://www.mr511.de/software/libelf-0.8.13.tar.gz | tar xvz && \
+  cd libelf-0.8.13 && \
+  CFLAGS="-static -O2" ./configure --prefix=/libelf-aarch64 && \
+  make && \
+  make install
+
+#---
+
+FROM gcc-aarch64 AS mambo-aarch64
+
+RUN apt install -y ruby && \
+  apt-get autoclean && apt-get clean && apt-get -y autoremove
+
+COPY --from=tmp /libelf-aarch64/include/* /usr/include/
+COPY --from=tmp /libelf-aarch64/include/libelf /usr/include/libelf
+COPY --from=tmp /libelf-aarch64/lib/* /usr/aarch64-linux-gnu/lib/
+
+CMD make
+
