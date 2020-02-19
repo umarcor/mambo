@@ -25,15 +25,12 @@ start_of_dispatcher_s:
 .syntax unified
 
 .global th_to_arm
-.func th_to_arm
 .thumb_func
 th_to_arm:
   bx pc
-.endfunc
 #endif // __arm__
 
 .global dispatcher_trampoline
-.func   dispatcher_trampoline
 
 #ifdef __arm__
 .code 32
@@ -170,8 +167,10 @@ dispatcher_trampoline:
   MRS X21, FPSR
 
   ADD X2, SP, #176
-  LDR X3, disp_thread_data
-  LDR X9, dispatcher_addr
+  ADRP X3, :got:disp_thread_data
+  LDR X3, [X3, :got_lo12:disp_thread_data]
+  ADRP X9, :got:dispatcher_addr
+  LDR X9, [X9, :got_lo12:dispatcher_addr]
   BL push_neon
 
   BLR X9
@@ -188,19 +187,17 @@ dispatcher_trampoline:
 
   B checked_cc_return
 
-dispatcher_addr: .quad dispatcher
+.global dispatcher_addr
 #endif
-.endfunc
 
 .global trace_head_incr
-.func   trace_head_incr
 #ifdef __arm__
 .code 32
   SUB PC, PC, #3
 .thumb_func
 trace_head_incr:
   STR LR, [SP, #16]
-  NOP // MOVW R1, #counter_base & 0xFFFF    
+  NOP // MOVW R1, #counter_base & 0xFFFF
   NOP
   NOP // MOVT R1, #counter_base >> 16
   NOP
@@ -280,8 +277,11 @@ create_trace_trampoline:
    *               uint32_t   *trace_addr)    X2
    */
   ADD X2, SP, #160
-  LDR X0, disp_thread_data
-  LDR X3, =create_trace
+  MOV X1, X0
+  ADRP X0, :got:disp_thread_data
+  LDR X0, [X0, :got_lo12:disp_thread_data]
+  ADRP X3, :got:create_trace
+  LDR X3, [X3, :got_lo12:create_trace]
   BL push_neon
 
   BLR X3
@@ -303,11 +303,9 @@ create_trace_trampoline:
   B checked_cc_return
 
 #endif // __aarch64__
-.endfunc
 
 .global syscall_wrapper
 .global syscall_wrapper_svc
-.func   syscall_wrapper
 #ifdef __arm__
 .code 32
 syscall_wrapper:
@@ -379,8 +377,10 @@ syscall_wrapper:
   MOV X0, X8
   ADD X1, SP, #512
   MOV X2, X29
-  LDR X3, disp_thread_data
-  LDR X4, syscall_handler_pre_addr
+  ADRP X3, :got:disp_thread_data
+  LDR X3, [X3, :got_lo12:disp_thread_data]
+  ADRP X4, :got:syscall_handler_pre_addr
+  LDR X4, [X4, :got_lo12:syscall_handler_pre_addr]
 
   BLR X4
 
@@ -404,8 +404,10 @@ syscall_wrapper_svc:
   STR X0, [X1, #0]
   MOV X0, X8
   MOV X2, X29
-  LDR X3, disp_thread_data
-  LDR X4, syscall_handler_post_addr
+  ADRP X3, :got:disp_thread_data
+  LDR X3, [X3, :got_lo12:disp_thread_data]
+  ADRP X4, :got:syscall_handler_post_addr
+  LDR X4, [X4, :got_lo12:syscall_handler_post_addr]
   BLR X4
 
 s_w_r:
@@ -423,24 +425,14 @@ s_w_r:
 
   B checked_cc_return
 
-syscall_handler_pre_addr: .quad syscall_handler_pre
-syscall_handler_post_addr: .quad syscall_handler_post
+.global syscall_handler_pre_addr
+.global syscall_handler_post_addr
 #endif // __aarch64__
-.endfunc
 
 .global disp_thread_data
-disp_thread_data:
-#ifdef __arm__
-  .word 0
-#endif
-#ifdef __aarch64__
-  .quad 0
-#endif
-
 .global send_self_signal
 
 .global checked_cc_return
-.func   checked_cc_return
 checked_cc_return:
 #ifdef __arm__
 .code 32
@@ -533,7 +525,8 @@ deliver_signals_trampoline:
   CMP X0, X2
   BEQ .
 
-  LDR X3, =deliver_signals
+  ADRP X3, :got:deliver_signals
+  LDR X3, [X3, :got_lo12:deliver_signals]
   BLR X3
 
   MSR NZCV, X19
@@ -570,14 +563,8 @@ abort_self_signal:
   LDR X0, [SP], #32
   BR X0
 #endif
-.endfunc
 
 .global th_is_pending_ptr
-#ifdef __arm__
-th_is_pending_ptr: .word 0
-#elif __aarch64__
-th_is_pending_ptr: .quad 0
-#endif
 
 # place the literal pool before the end_of_dispatcher_s symbol
 .ltorg
@@ -585,3 +572,13 @@ th_is_pending_ptr: .quad 0
 .global end_of_dispatcher_s
 end_of_dispatcher_s:
 
+#ifdef __arm__
+th_is_pending_ptr: .word 0
+#elif __aarch64__
+.data
+dispatcher_addr: .quad dispatcher
+disp_thread_data: .quad 0
+syscall_handler_pre_addr: .quad syscall_handler_pre
+syscall_handler_post_addr: .quad syscall_handler_post
+th_is_pending_ptr: .quad 0
+#endif

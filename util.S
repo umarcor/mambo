@@ -25,7 +25,6 @@
 #endif
 
 .global dbm_client_entry
-.func dbm_client_entry
 .type dbm_client_entry, %function
 
 #ifdef __arm__
@@ -47,11 +46,9 @@ dbm_client_entry:
   STP XZR, XZR, [SP, #-16]!
   BR X0
 #endif
-.endfunc
 
 # R0 - new SP
 .global th_enter
-.func   th_enter
 .type   th_enter, %function
 
 #ifdef __arm__
@@ -84,10 +81,8 @@ th_enter:
 
   BR X1
 #endif
-.endfunc
 
 .global new_thread_trampoline
-.func
 .type   new_thread_trampoline, %function
 new_thread_trampoline:
 #ifdef __arm__
@@ -103,10 +98,8 @@ new_thread_trampoline:
   MOV X1, SP
 #endif
   B dbm_start_thread_pth
-.endfunc
 
 .global return_with_sp
-.func
 .type   return_with_sp, %function
 return_with_sp:
 #ifdef __arm__
@@ -122,10 +115,8 @@ return_with_sp:
   LDP X19, X20, [SP], #96
   RET
 #endif
-.endfunc
 
 .global raw_syscall
-.func   raw_syscall
 .type   raw_syscall, %function
 
 raw_syscall:
@@ -153,10 +144,8 @@ raw_syscall:
   SVC 0
   RET
 #endif
-.endfunc
 
 .global signal_trampoline
-.func signal_trampoline
 .type signal_trampoline, %function
 
 signal_trampoline:
@@ -207,10 +196,8 @@ sigret:
   MOV X8, #139
   SVC 0
 #endif
-.endfunc
 
 .global atomic_increment_u64
-.func atomic_increment_u64
 .type atomic_increment_u64, %function
 
 atomic_increment_u64:
@@ -240,10 +227,8 @@ retry:
   RET
 
 #endif
-.endfunc
 
 .global atomic_increment_u32
-.func atomic_increment_u32
 .type atomic_increment_u32, %function
 
 atomic_increment_u32:
@@ -265,10 +250,8 @@ atomic_increment_u32:
   RET
 
 #endif
-.endfunc
 
 .global atomic_decrement_if_positive_i32
-.func atomic_decrement_if_positive_i32
 .type atomic_decrement_if_positive_i32, %function
 
 atomic_decrement_if_positive_i32:
@@ -302,11 +285,9 @@ abort:
   RET
 
 #endif
-.endfunc
 
 
 .global safe_fcall_trampoline
-.func safe_fcall_trampoline
 .type safe_fcall_trampoline, %function
 
 safe_fcall_trampoline:

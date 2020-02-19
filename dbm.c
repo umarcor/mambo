@@ -456,7 +456,6 @@ void free_all_other_threads(dbm_thread *thread_data) {
   global_data.threads = thread_data;
 }
 
-
 void reset_process(dbm_thread *thread_data) {
   thread_data->tid = syscall(__NR_gettid);
 
@@ -466,6 +465,7 @@ void reset_process(dbm_thread *thread_data) {
   current_thread = thread_data;
   free_all_other_threads(thread_data);
 
+
   /*
       MASSIVE HACK
 
@@ -474,8 +474,8 @@ void reset_process(dbm_thread *thread_data) {
       printf, which might have been locked by a different thread in the parent
       process. Here we open new, unlocked, stdout and stderr streams.
   */
-  stdout = fdopen(1, "a");
-  stderr = fdopen(2, "a");
+  freopen("/dev/stdout", "a", stdout);
+  freopen("/dev/stderr", "a", stderr);
 
   mambo_deliver_callbacks(PRE_THREAD_C, thread_data);
 }
@@ -663,4 +663,3 @@ void main(int argc, char **argv, char **envp) {
   #define ARGDIFF 2
   elf_run(block_address, argv[1], argc-ARGDIFF, &argv[ARGDIFF], envp, &auxv);
 }
-

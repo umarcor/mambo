@@ -20,13 +20,13 @@ OPTS+=-DDBM_INLINE_HASH
 OPTS+=-DDBM_TRACES #-DTB_AS_TRACE_HEAD #-DBLXI_AS_TRACE_HEAD
 #OPTS+=-DCC_HUGETLB -DMETADATA_HUGETLB
 
-CFLAGS+=-D_GNU_SOURCE -g -std=gnu99 -O2
-CFLAGS+=-DGIT_VERSION=\"$(shell git describe --abbrev=8 --dirty --always)\"
+CFLAGS := $(CFLAGS) -D_GNU_SOURCE -g3 -std=gnu99 -O2 -fPIC -pie
+#CFLAGS+=-mcpu=native
 
-LDFLAGS+=-static -ldl
-LIBS=-lelf -lpthread -lz
+LDFLAGS := $(LDFLAGS) -ldl -fPIC -pie
+LIBS := $(LIBS) -lelf
 HEADERS=*.h makefile
-INCLUDES=-I/usr/include/libelf
+INCLUDES := $(INCLUDES)
 SOURCES= dispatcher.S common.c dbm.c traces.c syscalls.c dispatcher.c signals.c util.S
 SOURCES+=api/helpers.c api/plugin_support.c api/branch_decoder_support.c api/load_store.c api/internal.c api/hash_table.c
 SOURCES+=elf/elf_loader.o elf/symbol_parser.o
@@ -53,7 +53,7 @@ ifdef PLUGINS
 	CFLAGS += -DPLUGINS_NEW
 endif
 
-.PHONY: pie clean cleanall
+.PHONY: pie clean cleanall install
 
 all:
 	$(info MAMBO: detected architecture "$(ARCH)")
@@ -85,3 +85,9 @@ api/emit_%.c: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
 
 api/emit_%.h: pie/pie-%-encoder.c api/generate_emit_wrapper.rb
 	ruby api/generate_emit_wrapper.rb $< header > $@
+
+PREFIX ?= /usr/local
+
+install: all
+	mkdir -p $(PREFIX)$(DESTDIR)/bin
+	cp dbm $(PREFIX)$(DESTDIR)/bin/dbm
