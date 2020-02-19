@@ -30,9 +30,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/shm.h>
-#include <signal.h>
 
 #include "dbm.h"
+#include "kernel_sigaction.h"
 #include "scanner_common.h"
 #include "syscalls.h"
 
@@ -112,7 +112,7 @@ dbm_thread *dbm_create_thread(dbm_thread *thread_data, void *next_inst, sys_clon
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  // pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
+  pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
   /* We're switching to the stack allocated by the application immediately, so make this
      as small as possible. Our glibc stores data here, so we can't unmap it.
      Also see man pthread_attr_setguardsize BUGS. */
@@ -266,12 +266,12 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
       uintptr_t handler = 0xdead;
       assert(args[3] == 8 && args[0] >= 0 && args[0] < _NSIG);
 
-      struct sigaction *act = (struct sigaction *)args[1];
+      struct kernel_sigaction *act = (struct kernel_sigaction *)args[1];
       if (act != NULL) {
-        handler = (uintptr_t)act->sa_handler;
+        handler = (uintptr_t)act->k_sa_handler;
         // Never remove the UNLINK_SIGNAL handler, which is used internally by MAMBO
-        if (args[0] == UNLINK_SIGNAL || (act->sa_handler != SIG_IGN && act->sa_handler != SIG_DFL)) {
-          act->sa_handler = signal_trampoline;
+        if (args[0] == UNLINK_SIGNAL || (act->k_sa_handler != SIG_IGN && act->k_sa_handler != SIG_DFL)) {
+          act->k_sa_handler = (__sighandler_t)signal_trampoline;
           act->sa_flags |= SA_SIGINFO;
         }
       }
@@ -282,9 +282,9 @@ int syscall_handler_pre(uintptr_t syscall_no, uintptr_t *args, uint16_t *next_in
 
       uintptr_t syscall_ret = raw_syscall(syscall_no, args[0], args[1], args[2], args[3]);
       if (syscall_ret == 0) {
-        struct sigaction *oldact = (struct sigaction *)args[2];
-        if (oldact != NULL && oldact->sa_handler != SIG_IGN && oldact->sa_handler != SIG_DFL) {
-          oldact->sa_handler = global_data.signal_handlers[args[0]];
+        struct kernel_sigaction *oldact = (struct kernel_sigaction *)args[2];
+        if (oldact != NULL && oldact->k_sa_handler != SIG_IGN && oldact->k_sa_handler != SIG_DFL) {
+          oldact->k_sa_handler = (void *)global_data.signal_handlers[args[0]];
         }
 
         if (act != NULL) {
